@@ -18,6 +18,7 @@ allow = [
     "OpenSSL",
     "CC0-1.0",
     "MPL-2.0",
+    "GPL-3.0-only",
 ]
 unused-allowed-license = "allow"
 
