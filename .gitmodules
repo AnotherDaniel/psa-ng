@@ -1,0 +1,6 @@
+[submodule "tsftemplate"]
+	path = tsftemplate
+	url = https://github.com/AnotherDaniel/tsftemplate
+[submodule "tsfagent"]
+	path = tsfagent
+	url = https://github.com/AnotherDaniel/tsfagent

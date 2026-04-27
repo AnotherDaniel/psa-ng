@@ -1,0 +1,212 @@
+# Copyright (C) 2026 Eclipse Foundation and others.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v. 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0.
+#
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Eclipse Foundation
+# SPDX-License-Identifier: EPL-2.0
+
+# The workflow below serves to illustrate how tsffer and tsflink GitHub actions can be used in CI pipelines
+# to automate the process of collecing TSF evidence, linking it into an existing TSF argument, and performing
+# the scoring and report generation as part of a release flow.
+
+---
+# .github/workflows/release.yaml
+name: Release workflow
+
+on:
+  push:
+    tags:
+      - v*
+
+concurrency:
+  group: "release-${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  quality_artifacts:
+    name: Collect quality artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+
+      # Add Security-Policy requirement item (illustrate 'webpage' reference-type) [Stage II workflow]
+      - name: tsffer Security Policy evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_security_policy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "webpage",
+                "url": "https://www.eclipse.org/security/policy/",
+                "description": "Eclipse Foundation Security Policy"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "SECURITY.md#L16-L18",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Project security policy definition and associated link"
+          asset_name: "Security Policy link"
+          asset_tsf_ids: "TSFTEMPLATE-SECURITY_POLICY"
+
+      # Add README evidence item to release file set, use URL as evidence [Stage II workflow]
+      - name: Upload README to release
+        uses: svenstaro/upload-release-action@v2
+        id: upload_README
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: README.md
+          tag: ${{ github.ref }}
+      - name: tsffer README evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_README
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            {
+              "reference_type": "download_url",
+              "url": "${{ steps.upload_README.outputs.browser_download_url }}",
+              "description": "Project README"
+            }
+          asset_description: "The tsftemplate README file"
+          asset_name: "Project README"
+          asset_tsf_ids: "TSFTEMPLATE-PROJECT_README,TSFTEMPLATE-PROJECT_SCOPE"
+
+      # Add an OFT requirements item [Stage II workflow]
+      - name: tsffer OFT requirement evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_requirement
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            {
+              "reference_type": "openfasttrace",
+              "requirement_id": "req~project-readme"
+            }
+          asset_description: "Tracing info for an OpenFastTrace requirement"
+          asset_name: "OpenFastTrace Requirement"
+          asset_tsf_ids: "TSFTEMPLATE-PROJECT_README"
+
+  # Run OFT reporting for both aspec and html formats (aspec for trudag processing, html for website publication)
+  openfasttrace_report:
+    name: Generate openfasttrace report in aspec format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    needs:
+      - quality_artifacts
+    outputs:
+      tracing-report-name: ${{ steps.run-oft-aspec.outputs.tracing-report-name }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: "Determine OpenFastTrace file patterns from .env file"
+        uses: falti/dotenv-action@v1.2.0
+        with:
+          path: .env.oft
+          export-variables: true
+          keys-case: bypass
+
+      # Have OFT generate ASPEC format report [Stage III workflow]
+      - name: Run OpenFastTrace
+        id: run-oft-aspec
+        uses: AnotherDaniel/tsftemplate/.github/actions/run-oft@main
+        with:
+          report-format: "aspec"
+          file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
+          tags: "${{ env.OFT_TAGS_}}"
+
+      # Have OFT generate HTML format report [Stage III workflow]
+      - name: Run OpenFastTrace
+        id: run-oft-html
+        uses: AnotherDaniel/tsftemplate/.github/actions/run-oft@main
+        with:
+          report-format: "html"
+          file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
+          tags: "${{ env.OFT_TAGS_}}"
+
+  # This section is the heart of the tsftemplate Stage III workflow, collecting all relevant quality artifacts,
+  # creating and publishing content for OFT requirements trace and TSF report.
+  trustable_scoring:
+    name: Package and publish tsf artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    needs:
+      - quality_artifacts
+      - openfasttrace_report
+    steps:
+      - uses: actions/checkout@v6
+
+      # Use tsffer action to package all .tsffer metadata snippets, and upload to release artifacts for documentation purposes
+      - name: Package tsffer snippets and add to release artifacts
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: package_tsffer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: package
+          release_upload: true
+
+      # Retrieve OFT ASPEC report and upload to release artifacts for documentation purposes
+      - name: Retrieve OFT report for tsflink analysis
+        uses: actions/download-artifact@v8
+        with:
+          name: oft-tracing-report-aspec
+          path: mkdocs/trustable
+      - name: Upload OFT report to release artifacts
+        uses: svenstaro/upload-release-action@v2
+        id: upload_OFT_report_aspec
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "mkdocs/trustable/${{ needs.openfasttrace_report.outputs.tracing-report-name }}"
+          tag: ${{ github.ref }}
+
+      # Use tsflink action to process TSF graph/score and generate TST report;
+      # store report to workflow artifacts for publication step and to release artifacts for documentation.
+      - name: Link, score and publish TSF tree
+        uses: AnotherDaniel/tsflink@v0.1.10
+        id: link_tsffer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OFT_ASPEC: "mkdocs/trustable/${{ needs.openfasttrace_report.outputs.tracing-report-name }}"
+      - name: Store published report for deployment
+        uses: actions/upload-artifact@v7
+        with:
+          name: trustable-report-files
+          path: ${{ steps.link_tsffer.outputs.trudag_report_dir }}
+      - name: Upload TSF report to release artifacts
+        uses: svenstaro/upload-release-action@v2
+        id: upload_TSF_report
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.link_tsffer.outputs.trudag_report }}
+          tag: ${{ github.ref }}
+
+  # Build and deploy project documentation to GH pages
+  deploy:
+    name: Deploy tsf report to gh-pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    needs:
+      - trustable_scoring
+    uses: ./.github/workflows/docs.yaml

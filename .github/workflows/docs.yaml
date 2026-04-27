@@ -1,0 +1,73 @@
+# Copyright (C) 2026 Eclipse Foundation and others.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v. 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0.
+#
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Eclipse Foundation
+# SPDX-License-Identifier: EPL-2.0
+
+# The workflow below serves to illustrate how tsffer and tsflink GitHub actions can be used in CI pipelines
+# to automate the process of collecing TSF evidence, linking it into an existing TSF argument, and performing
+# the scoring and report generation as part of a release flow.
+
+---
+# .github/workflows/docs.yaml
+name: Report publication workflow
+
+on:
+    workflow_call:
+    workflow_dispatch:
+
+concurrency:
+    group: "publish-${{ github.head_ref || github.ref }}"
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+            - run: pip install -e .
+
+            - name: Retrieve HTML OFT report for publication
+              uses: actions/download-artifact@v8
+              with:
+                  name: oft-tracing-report-html
+                  path: mkdocs/oft
+
+            - name: Retrieve TSF report for publication
+              uses: actions/download-artifact@v8
+              with:
+                  name: trustable-report-files
+                  path: mkdocs/trustable
+
+            - name: Build site
+              env:
+                  VERSION: ${{ github.ref_name }}
+                  REPO_URL: https://github.com/${{ github.repository }}
+                  REPO_NAME: ${{ github.repository }}
+                  SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+                  MAIN_PATH: /tree/main
+              run: mkdocs build
+
+            - uses: actions/upload-pages-artifact@v4
+              with:
+                  path: site
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+        steps:
+            - uses: actions/deploy-pages@v4

@@ -1,0 +1,65 @@
+site_name: tsftemplate Documentation
+repo_url: !ENV REPO_URL
+repo_name: !ENV REPO_NAME
+site_url: !ENV SITE_URL
+#site_dir: site
+
+docs_dir: mkdocs
+
+extra:
+  version: !ENV [VERSION, "local"]
+  main_path: !ENV MAIN_PATH
+  sm:
+    source: !ENV REPO_URL
+    pages: !ENV SITE_URL
+
+theme:
+  name: material
+  icon:
+    logo: fontawesome/solid/chart-diagram
+  favicon: assets/images/favicon.svg
+  font: false
+  custom_dir: mkdocs/overrides
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - content.footnote.tooltips
+    - content.tooltips
+    - navigation.footer
+  palette:
+    - scheme: light-theme
+      toggle:
+        icon: material/brightness-3
+        name: Switch to dark mode
+    - scheme: dark-theme
+      toggle:
+        icon: material/brightness-5
+        name: Switch to light mode
+
+markdown_extensions:
+  - abbr
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ['.']
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
+use_directory_urls: false
+
+plugins:
+  - search
+  - awesome-nav
+  - markdownextradata
+
+extra_css:
+  - assets/stylesheets/trustable.css
+
+nav:
+  - Introduction: 'README.md'

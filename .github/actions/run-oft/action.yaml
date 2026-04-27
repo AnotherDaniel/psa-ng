@@ -1,0 +1,83 @@
+# ********************************************************************************
+#  Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+#  See the NOTICE file(s) distributed with this work for additional
+#  information regarding copyright ownership.
+#
+#  This program and the accompanying materials are made available under the
+#  terms of the Apache License Version 2.0 which is available at
+#  https://www.apache.org/licenses/LICENSE-2.0
+#
+#  SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************/
+
+# Perform requirements tracing against a given set of artifacts specified by glob patterns
+# using OpenFastTrace (https://github.com/itsallcode/openfasttrace)
+# Returns the URL of the created report as an output
+
+name: "Run OpenFastTrace"
+description: |
+  Runs OpenFastTrace with the trace command on files in the local workspace.
+inputs:
+  file-patterns:
+    description: |
+      A whitespace separated list of glob patterns which specify the files to include in the OFT trace run.
+    default: "**/*.*"
+    required: false
+  tags:
+    description: |
+      A comma separated list of tags to use for filtering specification items.
+      If not set explicitly, all specification items from files matching the file patterns are considered.
+    default: ""
+    required: false
+  report-format:
+    description: |
+      Format the generated report should be in - options are 'plain', 'html', 'aspec' (defaults to html).
+    default: "html"
+    required: false
+outputs:
+  oft-exit-code:
+    description: |
+      The exit code indicating the outcome of running OpenFastTrace (0: success, 1: failure).
+      The report is created in any case, as long as OpenFastTrace could be run at all.
+    value: ${{ steps.run-oft.outputs.oft-exit-code }}
+  tracing-report-name:
+    description: "The filename of the OpenFastTrace report"
+    value: ${{ steps.prepare-env.outputs.report-file-name }}
+  tracing-report-url:
+    description: "The URL to the OpenFastTrace report"
+    value: ${{ steps.upload-tracing-report.artifact-url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare environment
+      id: prepare-env
+      shell: bash
+      run: |
+        # Validate report-format input
+        case "${{ inputs.report-format }}" in
+          plain|html|aspec) ;;
+          *) echo "::error::Invalid report-format '${{ inputs.report-format }}'. Must be one of: plain, html, aspec."; exit 1 ;;
+        esac
+        # Prepare Environment
+        REPORT_FILE="oft-report.${{ inputs.report-format }}"
+        echo "TRACING_REPORT_FILE_NAME=$REPORT_FILE" >> $GITHUB_ENV
+        echo "report-file-name=$REPORT_FILE" >> $GITHUB_OUTPUT
+
+    - name: Run OpenFastTrace
+      id: run-oft
+      uses: itsallcode/openfasttrace-github-action@v0.4.0
+      with:
+        file-patterns: ${{ inputs.file-patterns }}
+        report-filename: ${{ env.TRACING_REPORT_FILE_NAME }}
+        report-format: ${{ inputs.report-format }}
+        tags: ${{ inputs.tags }}
+
+    - name: Upload tracing report
+      uses: actions/upload-artifact@v7
+      id: upload-tracing-report
+      if: ${{ steps.run-oft.outputs.oft-exit-code != '' }}
+      with:
+        name: oft-tracing-report-${{ inputs.report-format }}
+        path: ${{ env.TRACING_REPORT_FILE_NAME }}
