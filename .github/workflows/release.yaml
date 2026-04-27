@@ -559,7 +559,7 @@ jobs:
       # Use tsflink action to process TSF graph/score and generate TST report;
       # store report to workflow artifacts for publication step and to release artifacts for documentation.
       - name: Link, score and publish TSF tree
-        uses: AnotherDaniel/tsflink@v0.3.0
+        uses: AnotherDaniel/tsflink@v0.1.10
         id: link_tsffer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
