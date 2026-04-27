@@ -1,0 +1,14 @@
+# Default flags for `act` — local GitHub Actions runner.
+# See https://nektosact.com/usage/index.html
+
+# Use a medium-sized Ubuntu image. The `act-latest` image (~1.6 GB) includes
+# common build tools; for a closer match to real GitHub runners, switch to
+# catthehacker/ubuntu:full-latest (~12 GB).
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Match Apple Silicon / ARM Macs — the container must run under linux/amd64
+# emulation because most GitHub Actions only publish amd64 images.
+--container-architecture linux/amd64
+
+# Don't pull action images every run (use cached ones when available).
+--action-offline-mode

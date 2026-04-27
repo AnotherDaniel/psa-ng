@@ -1,0 +1,7 @@
+/target/
+/data/
+config.toml
+*.db
+
+# act local runner — real secrets file (example is committed)
+.github/.act-secrets

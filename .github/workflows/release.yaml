@@ -1,17 +1,16 @@
-# Copyright (C) 2026 Eclipse Foundation and others.
+# Copyright (C) 2026 psa-ng project contributors.
 #
-# This program and the accompanying materials are made available under the
-# terms of the Eclipse Public License v. 2.0 which is available at
-# http://www.eclipse.org/legal/epl-2.0.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
 #
 # SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Eclipse Foundation
-# SPDX-License-Identifier: EPL-2.0
+# SPDX-FileCopyrightText: 2026 psa-ng project contributors
+# SPDX-License-Identifier: GPL-3.0-only
 
-# The workflow below serves to illustrate how tsffer and tsflink GitHub actions can be used in CI pipelines
-# to automate the process of collecing TSF evidence, linking it into an existing TSF argument, and performing
-# the scoring and report generation as part of a release flow.
-
+# Release workflow: runs all PR-level checks, collects test coverage, gathers TSF
+# quality evidence via tsffer, generates OFT tracing reports, and publishes the
+# TSF trust report and documentation.
 ---
 # .github/workflows/release.yaml
 name: Release workflow
@@ -25,20 +24,56 @@ concurrency:
   group: "release-${{ github.head_ref || github.ref }}"
   cancel-in-progress: true
 
+env:
+  RUST_TOOLCHAIN: ${{ vars.RUST_TOOLCHAIN || 'stable' }}
+  CARGO_TERM_COLOR: always
+
 jobs:
+  # ── Gate: run all PR-level checks first ──────────────────────────────
+  check:
+    name: PR-level checks
+    uses: ./.github/workflows/check.yaml
+
+  # ── Release-only: test coverage ──────────────────────────────────────
+  coverage:
+    name: Test coverage
+    runs-on: ubuntu-latest
+    needs:
+      - check
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: llvm-tools-preview
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: Generate coverage report
+        run: cargo llvm-cov --workspace --html --output-dir coverage
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  # ── TSF evidence collection ──────────────────────────────────────────
   quality_artifacts:
     name: Collect quality artifacts
     runs-on: ubuntu-latest
+    needs:
+      - check
     permissions:
       contents: write
       actions: read
     steps:
       - uses: actions/checkout@v6
 
-      # Add Security-Policy requirement item (illustrate 'webpage' reference-type) [Stage II workflow]
-      - name: tsffer Security Policy evidence
+      # PSA API Authentication evidence
+      - name: tsffer API authentication evidence
         uses: AnotherDaniel/tsffer@v0.5.5
-        id: tsffer_security_policy
+        id: tsffer_api_auth
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -46,50 +81,85 @@ jobs:
           reference_properties: |
             [
               {
-                "reference_type": "webpage",
-                "url": "https://www.eclipse.org/security/policy/",
-                "description": "Eclipse Foundation Security Policy"
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~oauth2-authentication"
               },
               {
-                "reference_type": "github",
-                "repository": "${{ github.repository }}",
-                "path": "SECURITY.md#L16-L18",
-                "ref": "${{ github.ref }}"
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~token-refresh"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~credential-persistence"
               }
             ]
-          asset_description: "Project security policy definition and associated link"
-          asset_name: "Security Policy link"
-          asset_tsf_ids: "TSFTEMPLATE-SECURITY_POLICY"
+          asset_description: "OFT tracing for OAuth2 authentication, token refresh, and
+            credential persistence requirements"
+          asset_name: "OFT Authentication"
+          asset_tsf_ids: "PSA_NG-API_AUTHENTICATION"
 
-      # Add README evidence item to release file set, use URL as evidence [Stage II workflow]
-      - name: Upload README to release
-        uses: svenstaro/upload-release-action@v2
-        id: upload_README
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: README.md
-          tag: ${{ github.ref }}
-      - name: tsffer README evidence
+      # Vehicle operations evidence
+      - name: tsffer vehicle operations evidence
         uses: AnotherDaniel/tsffer@v0.5.5
-        id: tsffer_README
+        id: tsffer_vehicle_ops
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           mode: reference
           reference_properties: |
-            {
-              "reference_type": "download_url",
-              "url": "${{ steps.upload_README.outputs.browser_download_url }}",
-              "description": "Project README"
-            }
-          asset_description: "The tsftemplate README file"
-          asset_name: "Project README"
-          asset_tsf_ids: "TSFTEMPLATE-PROJECT_README,TSFTEMPLATE-PROJECT_SCOPE"
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~vehicle-status"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~charge-control"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/client.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "OFT tracing and source for vehicle operation requirements"
+          asset_name: "Vehicle Operations"
+          asset_tsf_ids: "PSA_NG-VEHICLE_OPERATIONS"
 
-      # Add an OFT requirements item [Stage II workflow]
-      - name: tsffer OFT requirement evidence
+      # Web interface evidence
+      - name: tsffer web interface evidence
         uses: AnotherDaniel/tsffer@v0.5.5
-        id: tsffer_requirement
+        id: tsffer_web
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~vehicle-status-endpoint"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~dashboard-overview"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/routes.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "OFT tracing and source for web interface requirements"
+          asset_name: "Web Interface"
+          asset_tsf_ids: "PSA_NG-WEB_INTERFACE"
+
+      # Credential security evidence
+      - name: tsffer credential security evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_security
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -97,11 +167,281 @@ jobs:
           reference_properties: |
             {
               "reference_type": "openfasttrace",
-              "requirement_id": "req~project-readme"
+              "requirement_id": "req~credential-persistence"
             }
-          asset_description: "Tracing info for an OpenFastTrace requirement"
-          asset_name: "OpenFastTrace Requirement"
-          asset_tsf_ids: "TSFTEMPLATE-PROJECT_README"
+          asset_description: "OFT tracing for credential security requirements"
+          asset_name: "Credential Security"
+          asset_tsf_ids: "PSA_NG-CREDENTIAL_SECURITY"
+
+      # Unit testing evidence
+      - name: tsffer unit testing evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_testing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/client.rs",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/auth.rs",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/db.rs",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/route_tests.rs",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/config_tests.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Test source files for unit testing evidence across API
+            client, auth, database, routes, and configuration"
+          asset_name: "Unit Testing"
+          asset_tsf_ids: "PSA_NG-UNIT_TESTING"
+
+      # Build and release evidence
+      - name: tsffer build release evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~rust-best-practices"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/release.yaml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "CI workflow and OFT tracing for build and release process"
+          asset_name: "Build Release"
+          asset_tsf_ids: "PSA_NG-BUILD_RELEASE"
+
+      # Dependency provenance evidence
+      - name: tsffer dependency provenance evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_provenance
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~stable-dependencies"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "Cargo.lock",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Dependency pinning and stable crate selection evidence"
+          asset_name: "Dependency Provenance"
+          asset_tsf_ids: "PSA_NG-DEPENDENCY_PROVENANCE"
+
+      # Change management evidence
+      - name: tsffer change management evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            {
+              "reference_type": "github",
+              "repository": "${{ github.repository }}",
+              "path": ".github/workflows/release.yaml",
+              "ref": "${{ github.ref }}"
+            }
+          asset_description: "CI workflow enforcing test execution before release"
+          asset_name: "Change Management"
+          asset_tsf_ids: "PSA_NG-CHANGE_MANAGEMENT"
+
+      # Error handling evidence
+      - name: tsffer error handling evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_errors
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/error.rs",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/routes.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Error type hierarchy and HTTP error mapping in route handlers"
+          asset_name: "Error Handling"
+          asset_tsf_ids: "PSA_NG-ERROR_HANDLING"
+
+      # API access control evidence
+      - name: tsffer API access control evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_api_access_control
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~api-bearer-auth"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/routes.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Bearer token authentication middleware and OFT tracing for
+            API access control"
+          asset_name: "API Access Control"
+          asset_tsf_ids: "PSA_NG-API_ACCESS_CONTROL"
+
+      # Web hardening evidence
+      - name: tsffer web hardening evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_web_hardening
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~html-output-escaping"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~security-headers"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~sanitized-errors"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~request-body-limit"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~dependency-audit"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-web/src/templates.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "XSS prevention, security headers, body limits, error
+            sanitization, and dependency auditing"
+          asset_name: "Web Hardening"
+          asset_tsf_ids: "PSA_NG-WEB_HARDENING"
+
+      # Test coverage evidence
+      - name: tsffer test coverage evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_test_coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/release.yaml",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/nightly.yaml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "CI workflow files showing cargo-llvm-cov coverage report
+            generation in release and nightly pipelines"
+          asset_name: "Test Coverage"
+          asset_tsf_ids: "PSA_NG-TEST_COVERAGE"
+
+      # Development process evidence
+      - name: tsffer development process evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_dev_process
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~rust-best-practices"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/check.yaml",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "deny.toml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "CI check pipeline (fmt, clippy, test, doc, cargo-deny) and
+            OFT tracing for development process enforcement"
+          asset_name: "Development Process"
+          asset_tsf_ids: "PSA_NG-DEVELOPMENT_PROCESS"
 
   # Run OFT reporting for both aspec and html formats (aspec for trudag processing, html for website publication)
   openfasttrace_report:
@@ -130,7 +470,7 @@ jobs:
         with:
           report-format: "aspec"
           file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
-          tags: "${{ env.OFT_TAGS_}}"
+          tags: "${{ env.OFT_TAGS }}"
 
       # Have OFT generate HTML format report [Stage III workflow]
       - name: Run OpenFastTrace
@@ -139,7 +479,7 @@ jobs:
         with:
           report-format: "html"
           file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
-          tags: "${{ env.OFT_TAGS_}}"
+          tags: "${{ env.OFT_TAGS }}"
 
   # This section is the heart of the tsftemplate Stage III workflow, collecting all relevant quality artifacts,
   # creating and publishing content for OFT requirements trace and TSF report.
@@ -176,17 +516,19 @@ jobs:
         id: upload_OFT_report_aspec
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "mkdocs/trustable/${{ needs.openfasttrace_report.outputs.tracing-report-name }}"
+          file: "mkdocs/trustable/${{
+            needs.openfasttrace_report.outputs.tracing-report-name }}"
           tag: ${{ github.ref }}
 
       # Use tsflink action to process TSF graph/score and generate TST report;
       # store report to workflow artifacts for publication step and to release artifacts for documentation.
       - name: Link, score and publish TSF tree
-        uses: AnotherDaniel/tsflink@v0.1.10
+        uses: AnotherDaniel/tsflink@v0.3.0
         id: link_tsffer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OFT_ASPEC: "mkdocs/trustable/${{ needs.openfasttrace_report.outputs.tracing-report-name }}"
+          OFT_ASPEC: "mkdocs/trustable/${{
+            needs.openfasttrace_report.outputs.tracing-report-name }}"
       - name: Store published report for deployment
         uses: actions/upload-artifact@v7
         with:

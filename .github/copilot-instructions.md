@@ -1,0 +1,1 @@
+../tsfagent/.github/copilot-instructions.md

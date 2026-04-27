@@ -1,0 +1,11 @@
+{
+    "ref": "refs/tags/v0.1.0",
+    "ref_name": "v0.1.0",
+    "repository": "AnotherDaniel/psa-ng",
+    "repository_owner": "AnotherDaniel",
+    "event": {
+        "repository": {
+            "name": "psa-ng"
+        }
+    }
+}

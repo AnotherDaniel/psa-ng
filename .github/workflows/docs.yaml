@@ -1,17 +1,15 @@
-# Copyright (C) 2026 Eclipse Foundation and others.
+# Copyright (C) 2026 psa-ng project contributors.
 #
-# This program and the accompanying materials are made available under the
-# terms of the Eclipse Public License v. 2.0 which is available at
-# http://www.eclipse.org/legal/epl-2.0.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
 #
 # SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Eclipse Foundation
-# SPDX-License-Identifier: EPL-2.0
+# SPDX-FileCopyrightText: 2026 psa-ng project contributors
+# SPDX-License-Identifier: GPL-3.0-only
 
-# The workflow below serves to illustrate how tsffer and tsflink GitHub actions can be used in CI pipelines
-# to automate the process of collecing TSF evidence, linking it into an existing TSF argument, and performing
-# the scoring and report generation as part of a release flow.
-
+# Builds and deploys the project documentation site (OFT tracing report and
+# TSF trust report) to GitHub Pages. Called by the release workflow.
 ---
 # .github/workflows/docs.yaml
 name: Report publication workflow
@@ -56,7 +54,8 @@ jobs:
                   VERSION: ${{ github.ref_name }}
                   REPO_URL: https://github.com/${{ github.repository }}
                   REPO_NAME: ${{ github.repository }}
-                  SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+                  SITE_URL: https://${{ github.repository_owner }}.github.io/${{
+                      github.event.repository.name }}/
                   MAIN_PATH: /tree/main
               run: mkdocs build
 

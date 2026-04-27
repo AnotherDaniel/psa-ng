@@ -1,0 +1,25 @@
+# [impl->req~configuration-file~1]
+# psa-ng configuration file
+
+[psa]
+client_id = "your_client_id"
+client_secret = "your_client_secret"
+brand = "peugeot"  # peugeot, citroen, ds, opel, vauxhall
+# api_base_url = "https://api.groupe-psa.com/connectedcar/v4"
+# token_file = "data/token.json"
+
+[server]
+host = "127.0.0.1"
+port = 5000
+# data_dir = "data"
+# api_token = "your_secret_bearer_token"  # Optional: set to require Bearer token auth on API endpoints
+
+# [impl->req~electricity-pricing~1]
+[electricity]
+price_per_kwh = 0.15
+currency = "EUR"
+# night_price_per_kwh = 0.08
+# night_start_hour = 22
+# night_start_minute = 0
+# night_end_hour = 6
+# night_end_minute = 0
