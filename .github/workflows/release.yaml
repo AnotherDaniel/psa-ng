@@ -443,6 +443,42 @@ jobs:
           asset_name: "Development Process"
           asset_tsf_ids: "PSA_NG-DEVELOPMENT_PROCESS"
 
+      # Container deployment evidence
+      - name: tsffer container deployment evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_container
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~container-image"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~container-deployment"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "Dockerfile",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "docker-compose.yaml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "OFT tracing and source for container image build and Docker
+            Compose deployment configuration"
+          asset_name: "Container Deployment"
+          asset_tsf_ids: "PSA_NG-CONTAINER_DEPLOYMENT"
+
   # Run OFT reporting for both aspec and html formats (aspec for trudag processing, html for website publication)
   openfasttrace_report:
     name: Generate openfasttrace report in aspec format

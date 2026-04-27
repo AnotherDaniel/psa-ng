@@ -1,0 +1,13 @@
+target/
+data/
+*.db
+config.toml
+.git/
+.github/
+.vscode/
+tsftemplate/
+tsfagent/
+trustable/
+docs/
+site/
+mkdocs/

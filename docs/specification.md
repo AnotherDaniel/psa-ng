@@ -375,6 +375,25 @@ The CI pipeline *MUST* include automated dependency vulnerability scanning via `
 
 Needs: impl
 
+## Deployment requirements
+
+### Container image
+
+`req~container-image~1`:
+The project *MUST* provide a multi-stage Dockerfile that builds the application from source using the stable Rust toolchain and produces a minimal runtime image containing only the compiled binary and its runtime dependencies.
+
+Needs: impl
+
+### Container deployment
+
+`req~container-deployment~1`:
+The project *MUST* provide a Docker Compose configuration that runs the application with a bind-mounted configuration file, a persistent named volume for data, and configurable port mapping.
+
+Needs: impl
+
+Depends:
+- req~container-image~1
+
 ## Future requirements
 
 The following requirements are specified but not yet implemented. They document planned functionality.

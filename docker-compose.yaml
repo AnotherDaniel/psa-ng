@@ -4,11 +4,23 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 3.
 #
+# SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 psa-ng project contributors
 # SPDX-License-Identifier: GPL-3.0-only
 
-# The file patterns that specify this component's resources which contain specification items
-# that cover the requirements
-OFT_FILE_PATTERNS="*.md *.rs *.toml *.yaml Dockerfile docs psa-api/src psa-web/src trustable/psa-ng .github"
+# [impl->req~container-deployment~1]
+services:
+  psa-ng:
+    build: .
+    container_name: psa-ng
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - psa-data:/app/data
+    environment:
+      - RUST_LOG=info
 
-OFT_TAGS=""
+volumes:
+  psa-data:

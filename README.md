@@ -91,6 +91,38 @@ cargo run -p psa-web -- config.toml
 
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
+### Docker
+
+Build and run with Docker Compose:
+
+```bash
+# Create config (set host to 0.0.0.0 for Docker)
+cp config.toml.example config.toml
+# Edit config.toml: set host = "0.0.0.0" under [server]
+
+# Build and start
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+```
+
+Or build and run the image directly:
+
+```bash
+docker build -t psa-ng .
+docker run -d --name psa-ng \
+  -p 5000:5000 \
+  -v ./config.toml:/app/config.toml:ro \
+  -v psa-data:/app/data \
+  psa-ng
+```
+
+> **Note:** Set `host = "0.0.0.0"` in `config.toml` when running in Docker so the server is reachable from outside the container. The SQLite database and token file are persisted in the `psa-data` volume.
+
 ## Configuration Reference
 
 The application reads a single TOML file (default: `config.toml`, or pass a path as the first CLI argument).
