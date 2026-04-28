@@ -1,0 +1,61 @@
+# Copyright (C) 2026 psa-ng project contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 psa-ng project contributors
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Release workflow: runs all PR-level checks, collects test coverage, gathers TSF
+# quality evidence via tsffer, generates OFT tracing reports, and publishes the
+# TSF trust report and documentation.
+---
+# .github/workflows/oft.yaml
+name: OFT test workflow
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: "release-${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+env:
+  RUST_TOOLCHAIN: ${{ vars.RUST_TOOLCHAIN || 'stable' }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  openfasttrace_report:
+    name: Generate openfasttrace report in aspec format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      tracing-report-name: oft-report.aspec
+    steps:
+      - uses: actions/checkout@v6
+      - name: "Determine OpenFastTrace file patterns from .env file"
+        uses: falti/dotenv-action@v1.2.0
+        with:
+          path: .env.oft
+          export-variables: true
+          keys-case: bypass
+
+      # Have OFT generate ASPEC format report [Stage III workflow]
+      - name: Run OpenFastTrace (aspec)
+        id: run-oft-aspec
+        uses: itsallcode/openfasttrace-github-action@v0.4.0
+        with:
+          file-patterns: ${{ env.OFT_FILE_PATTERNS }}
+          report-format: aspec
+          report-filename: oft-report.aspec
+          tags: ${{ env.OFT_TAGS }}
+          fail-on-error: true
+      - name: Upload aspec report
+        uses: actions/upload-artifact@v4
+        with:
+          name: oft-tracing-report-aspec
+          path: oft-report.aspec
