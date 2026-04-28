@@ -480,6 +480,8 @@ jobs:
           asset_tsf_ids: "PSA_NG-CONTAINER_DEPLOYMENT"
 
   # Run OFT reporting for both aspec and html formats (aspec for trudag processing, html for website publication)
+  # NOTE: Calls the OFT Docker action directly instead of through the run-oft composite action,
+  # because Docker actions called from cross-repo composite actions have workspace bind-mount issues.
   openfasttrace_report:
     name: Generate openfasttrace report in aspec format
     runs-on: ubuntu-latest
@@ -489,7 +491,7 @@ jobs:
     needs:
       - quality_artifacts
     outputs:
-      tracing-report-name: ${{ steps.run-oft-aspec.outputs.tracing-report-name }}
+      tracing-report-name: oft-report.aspec
     steps:
       - uses: actions/checkout@v6
       - name: "Determine OpenFastTrace file patterns from .env file"
@@ -500,22 +502,36 @@ jobs:
           keys-case: bypass
 
       # Have OFT generate ASPEC format report [Stage III workflow]
-      - name: Run OpenFastTrace
+      - name: Run OpenFastTrace (aspec)
         id: run-oft-aspec
-        uses: AnotherDaniel/tsftemplate/.github/actions/run-oft@main
+        uses: itsallcode/openfasttrace-github-action@v0.4.0
         with:
-          report-format: "aspec"
-          file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
-          tags: "${{ env.OFT_TAGS }}"
+          file-patterns: ${{ env.OFT_FILE_PATTERNS }}
+          report-format: aspec
+          report-filename: oft-report.aspec
+          tags: ${{ env.OFT_TAGS }}
+      - name: Upload aspec report
+        uses: actions/upload-artifact@v4
+        if: ${{ steps.run-oft-aspec.outputs.oft-exit-code != '' }}
+        with:
+          name: oft-tracing-report-aspec
+          path: oft-report.aspec
 
       # Have OFT generate HTML format report [Stage III workflow]
-      - name: Run OpenFastTrace
+      - name: Run OpenFastTrace (html)
         id: run-oft-html
-        uses: AnotherDaniel/tsftemplate/.github/actions/run-oft@main
+        uses: itsallcode/openfasttrace-github-action@v0.4.0
         with:
-          report-format: "html"
-          file-patterns: "${{ env.OFT_FILE_PATTERNS }}"
-          tags: "${{ env.OFT_TAGS }}"
+          file-patterns: ${{ env.OFT_FILE_PATTERNS }}
+          report-format: html
+          report-filename: oft-report.html
+          tags: ${{ env.OFT_TAGS }}
+      - name: Upload html report
+        uses: actions/upload-artifact@v4
+        if: ${{ steps.run-oft-html.outputs.oft-exit-code != '' }}
+        with:
+          name: oft-tracing-report-html
+          path: oft-report.html
 
   # This section is the heart of the tsftemplate Stage III workflow, collecting all relevant quality artifacts,
   # creating and publishing content for OFT requirements trace and TSF report.
