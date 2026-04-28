@@ -11,6 +11,10 @@ use tracing::{debug, info, warn};
 const AUTHORIZE_URL: &str = "https://idpcvs.{brand}.com/am/oauth2/authorize";
 const TOKEN_URL: &str = "https://idpcvs.{brand}.com/am/oauth2/access_token";
 
+// [impl->req~oauth2-scope-management~1]
+/// Default OAuth2 scopes needed for psa-ng operations.
+pub const DEFAULT_SCOPES: &str = "openid profile data:telemetry data:position data:trip data:alert remote:door:write remote:preconditioning:write remote:horn:write remote:charging:write remote:lights:write remote:wakeup:write";
+
 /// Persisted OAuth2 token data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenData {

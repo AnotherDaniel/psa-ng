@@ -41,7 +41,10 @@ mod tests {
             "peugeot".to_string(),
             Some(token_path),
         );
-        PsaClient::new(auth, Some(mock_uri.to_string()))
+        let mut client = PsaClient::new(auth, Some(mock_uri.to_string()));
+        // Pre-set callback ID so tests don't need to mock callback registration
+        client.set_callback_id("test_cb".to_string());
+        client
     }
 
     fn test_config() -> AppConfig {
@@ -98,7 +101,10 @@ mod tests {
                             "label": "e-208"
                         }
                     ]
-                }
+                },
+                "total": 1,
+                "currentPage": 0,
+                "totalPage": 1
             })))
             .mount(&mock_server)
             .await;
@@ -144,8 +150,8 @@ mod tests {
     async fn test_wakeup_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_1", "type": "WakeUp"})))
             .mount(&mock_server)
             .await;
 
@@ -163,8 +169,8 @@ mod tests {
     async fn test_charge_start_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_2", "type": "ElectricBatteryChargingRequest"})))
             .mount(&mock_server)
             .await;
 
@@ -183,8 +189,8 @@ mod tests {
     async fn test_charge_threshold_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_3", "type": "ElectricBatteryChargingRequest"})))
             .mount(&mock_server)
             .await;
 
@@ -201,8 +207,8 @@ mod tests {
     async fn test_charge_schedule_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_4", "type": "ElectricBatteryChargingRequest"})))
             .mount(&mock_server)
             .await;
 
@@ -221,8 +227,8 @@ mod tests {
     async fn test_preconditioning_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_5", "type": "ThermalPreconditioning"})))
             .mount(&mock_server)
             .await;
 
@@ -243,8 +249,8 @@ mod tests {
     async fn test_door_lock_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_6", "type": "Doors"})))
             .mount(&mock_server)
             .await;
 
@@ -265,8 +271,8 @@ mod tests {
     async fn test_lights_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_7", "type": "Lights"})))
             .mount(&mock_server)
             .await;
 
@@ -283,8 +289,8 @@ mod tests {
     async fn test_horn_endpoint() {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/user/vehicles/v1/callbacks"))
-            .respond_with(ResponseTemplate::new(200))
+            .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
+            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_8", "type": "Horn"})))
             .mount(&mock_server)
             .await;
 

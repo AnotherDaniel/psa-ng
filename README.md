@@ -1,5 +1,8 @@
 <!-- [impl->req~modular-architecture~1] -->
 
+[![TSF Score](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanotherdaniel.github.io%2Fpsa-ng%2Ftrustable%2Fscore.json&query=%24.scores%5B0%5D.score&label=TSF%20Score&color=blue)](https://anotherdaniel.github.io/psa-ng/trustable/dashboard.html)
+[![TSF Report](https://img.shields.io/github/v/release/AnotherDaniel/psa-ng?label=TSF%20Report&color=green)](https://anotherdaniel.github.io/psa-ng/trustable/trustable_report_for_psa-ng.html)
+
 # psa-ng
 
 A Rust reimplementation of [psa_car_controller](https://github.com/flobz/psa_car_controller) — remote control and monitoring for PSA group vehicles (Peugeot, Citroën, Opel/Vauxhall, DS) via the PSA Connected Car v4 API.

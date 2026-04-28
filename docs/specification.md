@@ -394,6 +394,66 @@ Needs: impl
 Depends:
 - req~container-image~1
 
+## API protocol conformance requirements
+
+### Callback registration
+
+`req~callback-registration~1`:
+The PSA API client *MUST* register a callback with the PSA API before sending remote commands, and *MUST* use the returned callback ID in subsequent remote command requests.
+
+Needs: impl, utest
+
+Depends:
+- req~oauth2-authentication~1
+
+### Remote command schema
+
+`req~remote-command-schema~1`:
+Remote command requests *MUST* use the PSA API v4 documented endpoint path (`/user/vehicles/{id}/callbacks/{cbid}/remotes`) and JSON payload schema with typed action fields (`door`, `horn`, `charging`, `lights`, `wakeUp`, `preconditioning`, `navigation`), and *MUST* send `Content-Type: application/json`.
+
+Needs: impl, utest
+
+Depends:
+- req~callback-registration~1
+
+### Rate limit handling
+
+`req~rate-limit-handling~1`:
+The PSA API client *MUST* parse `X-RateLimit-Remaining` and `Retry-After` response headers and *MUST* delay subsequent requests when the API returns HTTP 429 (Too Many Requests).
+
+Needs: impl, utest
+
+### API pagination
+
+`req~api-pagination~1`:
+The PSA API client *MUST* support token-based pagination for collection endpoints by following `pageToken` values in responses until all pages have been retrieved.
+
+Needs: impl, utest
+
+### OAuth2 scope management
+
+`req~oauth2-scope-management~1`:
+The PSA API client *SHOULD* request the minimum required OAuth2 scopes during authorization and *SHOULD* validate that the token carries the scopes needed for a given operation before making the request.
+
+Needs: impl, utest
+
+Depends:
+- req~oauth2-authentication~1
+
+### API error response parsing
+
+`req~api-error-parsing~1`:
+The PSA API client *MUST* parse structured error responses from the API (containing `code`, `uuid`, `message`, and `timestamp` fields) into a typed error variant.
+
+Needs: impl, utest
+
+### Vehicle model completeness
+
+`req~vehicle-model-completeness~1`:
+The `Vehicle` data model *MUST* include the `motorization` field (Electric, Hybrid, Thermic, Hydrogen) and timestamp fields (`createdAt`, `updatedAt`) as defined in the PSA Connected Car v4 API specification.
+
+Needs: impl, utest
+
 ## Future requirements
 
 The following requirements are specified but not yet implemented. They document planned functionality.

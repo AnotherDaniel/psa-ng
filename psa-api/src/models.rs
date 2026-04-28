@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 // [impl->req~vehicle-list~1]
+// [impl->req~vehicle-model-completeness~1]
 /// A vehicle registered to the authenticated user.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vehicle {
@@ -11,13 +12,39 @@ pub struct Vehicle {
     pub vin: String,
     pub brand: Option<String>,
     pub label: Option<String>,
+    pub motorization: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
+// [impl->req~api-pagination~1]
 /// Wrapper for the paginated vehicles list response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VehiclesResponse {
     #[serde(rename = "_embedded")]
     pub embedded: Option<VehiclesEmbedded>,
+    #[serde(rename = "_links")]
+    pub links: Option<PaginationLinks>,
+    pub total: Option<u32>,
+    #[serde(rename = "currentPage")]
+    pub current_page: Option<u32>,
+    #[serde(rename = "totalPage")]
+    pub total_page: Option<u32>,
+}
+
+/// HAL pagination links.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaginationLinks {
+    #[serde(rename = "next")]
+    pub next: Option<HalLink>,
+}
+
+/// A single HAL link.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HalLink {
+    pub href: Option<String>,
 }
 
 /// Embedded container for the vehicles array.
@@ -253,4 +280,135 @@ pub struct ChargingSession {
     pub end_level: Option<f64>,
     pub energy_kwh: Option<f64>,
     pub cost: Option<f64>,
+}
+
+// [impl->req~callback-registration~1]
+/// Request body for creating a callback subscription.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CallbackRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<Vec<String>>,
+    pub callback: CallbackConfig,
+}
+
+/// Callback delivery configuration (webhook, websocket, or push notification).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CallbackConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub webhook: Option<WebhookConfig>,
+}
+
+/// Webhook callback configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookConfig {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<Vec<WebhookHeader>>,
+}
+
+/// A single webhook header key-value pair.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookHeader {
+    pub key: String,
+    pub value: String,
+}
+
+/// Response from creating a callback.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CallbackResponse {
+    #[serde(rename = "callbackId")]
+    pub callback_id: Option<String>,
+    pub status: Option<String>,
+}
+
+// [impl->req~remote-command-schema~1]
+/// Remote command request body matching PSA API v4 schema.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RemoteCommand {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub door: Option<RemoteDoor>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub horn: Option<RemoteHorn>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub charging: Option<RemoteCharging>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lights: Option<RemoteLights>,
+    #[serde(rename = "wakeUp", skip_serializing_if = "Option::is_none")]
+    pub wake_up: Option<RemoteWakeUp>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preconditioning: Option<RemotePreconditioning>,
+}
+
+/// Remote door lock/unlock action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteDoor {
+    pub state: String,
+}
+
+/// Remote horn action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteHorn {
+    pub state: String,
+}
+
+/// Remote charging action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteCharging {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub immediate: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schedule: Option<RemoteChargingSchedule>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preferences: Option<RemoteChargingPreferences>,
+}
+
+/// Schedule for delayed charging.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteChargingSchedule {
+    #[serde(rename = "nextDelayedTime")]
+    pub next_delayed_time: String,
+}
+
+/// Charging preferences (e.g. target SoC).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteChargingPreferences {
+    #[serde(rename = "limitSoc")]
+    pub limit_soc: Option<u8>,
+}
+
+/// Remote lights action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteLights {
+    pub on: bool,
+}
+
+/// Remote wakeup action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteWakeUp {
+    pub action: String,
+}
+
+/// Remote preconditioning action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemotePreconditioning {
+    #[serde(rename = "airConditioning")]
+    pub air_conditioning: RemotePrecondAirCon,
+}
+
+/// Air conditioning preconditioning settings.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemotePrecondAirCon {
+    pub status: String,
+}
+
+/// Response from sending a remote command.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteActionResponse {
+    #[serde(rename = "remoteActionId")]
+    pub remote_action_id: Option<String>,
+    pub r#type: Option<String>,
 }
