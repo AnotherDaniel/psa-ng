@@ -1,0 +1,202 @@
+/* Acquired from https://gitlab.com/CodethinkLabs/trustable/trustable/-/raw/7ec33c49117cdd200167b2aa7a7983d147c28321/docs/assets/stylesheets/trustable.css */
+/* In addition, this contains a patch to add dark mode support to table heads, submitted in https://gitlab.com/CodethinkLabs/trustable/trustable/-/issues/78 */
+
+/* Version badge in sidebar */
+.md-logo {
+  overflow: visible !important;
+}
+
+.logo-with-badge {
+  display: flex;
+  align-items: center;
+}
+
+.logo-with-badge svg,
+.logo-with-badge img {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.logo-with-badge .version-badge {
+  display: inline-block;
+  background-color: var(--md-primary-bg-color);
+  color: var(--md-primary-fg-color);
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.15em 0.6em;
+  margin-top: 0.2em;
+  margin-left: 1.8em;
+  line-height: 1.6;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.md-hidden-column {
+  max-width: 0;
+}
+
+:root {
+
+  --md-text-font: "Helvetica";
+  --md-code-font: "FiraCode";
+
+  --trustable-blue: #1D2C46;
+  --trustable-light-blue: #2d79db;
+  --trustable-dark-turquoise: #0d9ca4;
+  --trustable-turquoise: #00DFC4;
+  --trustable-grey: #F3F3F3;
+  --trustable-darkgrey: #444;
+}
+
+[data-md-color-scheme="dark-theme"] {
+  color-scheme: dark;
+
+  --md-primary-bg-color: var(--trustable-grey);
+  --md-default-bg-color: var(--trustable-blue);
+  --md-default-fg-color: var(--trustable-blue);
+
+  --md-primary-fg-color: var(--trustable-blue);
+  --md-accent-fg-color: var(--trustable-turquoise);
+  --md-default-fg-color--light: white;
+
+  --md-typeset-color: var(--trustable-grey);
+  --md-typeset-a-color: var(--trustable-light-blue);
+
+  --md-code-fg-color: hsla(var(--md-hue), 18%, 86%, 0.82);
+  --md-code-bg-color: hsla(var(--md-hue), 15%, 18%, 1);
+  --md-code-hl-color--light:         hsla(#{hex2hsl($clr-blue-a200)}, 0.15);
+  --md-code-hl-number-color:         hsla(6, 74%, 63%, 1);
+  --md-code-hl-special-color:        hsla(340, 83%, 66%, 1);
+  --md-code-hl-function-color:       hsla(291, 57%, 65%, 1);
+  --md-code-hl-constant-color:       hsla(250, 62%, 70%, 1);
+  --md-code-hl-keyword-color:        hsla(219, 66%, 64%, 1);
+  --md-code-hl-string-color:         hsla(150, 58%, 44%, 1);
+  --md-code-hl-name-color:           var(--md-code-fg-color);
+  --md-code-hl-operator-color:       var(--md-default-fg-color--light);
+  --md-code-hl-punctuation-color:    var(--md-default-fg-color--light);
+  --md-code-hl-comment-color:        var(--md-default-fg-color--light);
+  --md-code-hl-generic-color:        var(--md-default-fg-color--light);
+  --md-code-hl-variable-color:       var(--md-default-fg-color--light);
+
+  --md-typeset-table-color:          hsla(var(--md-hue), 15%, 95%, 0.12);
+  --md-typeset-table-color--light:   hsla(var(--md-hue), 15%, 95%, 0.035);
+
+  --trustable-thead-bg: var(--trustable-darkgrey);
+}
+
+[data-md-color-scheme="light-theme"] {
+  color-scheme: light;
+
+  --md-primary-fg-color: var(--trustable-blue);
+  --md-primary-bg-color: var(--trustable-grey);
+
+  --md-accent-fg-color: var(--trustable-turquoise);
+
+  --md-typeset-a-color: var(--trustable-light-blue);
+
+  --trustable-thead-bg: var(--trustable-grey);
+}
+
+/* Table style */
+
+thead {
+  background-color: var(--trustable-thead-bg);
+}
+
+/* Doorstop compliance report styles */
+
+.status-suspect {
+  font-style: italic;
+}
+
+.status-unreviewed {
+  text-decoration-line: line-through;
+}
+
+.item-section {
+  font-size: larger;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+.md-typeset h3 {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-right: 10px;
+}
+
+.supporting-item {
+  display: list-item;
+  list-style-position: inside;
+  padding-left: 1em;
+}
+
+.item-element {
+  margin: 0px;
+  float: left;
+  min-width: 20px;
+  margin-right: 10px;
+  text-align: center;
+}
+
+.expanded-item-element {
+  margin: 0px;
+}
+
+.constrained-item-element {
+  margin: 0px;
+  float: left;
+  width: fit-content;
+}
+
+.item-subsection {
+  font-weight: bold;
+  font-style: italic;
+}
+
+.image-float-left {
+  float: left;
+  padding-right: 25px;
+}
+
+.image-float-right {
+  float: right;
+  padding-left: 25px;
+}
+
+.image-centre {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+}
+
+/* Always use black for scores to contrast with colormap */
+
+a.tsf-score:link {
+  color: black;
+}
+
+a.tsf-score:visited {
+  color: black;
+}
+
+a.tsf-score:hover {
+  color: var(--trustable-turquoise);
+}
+
+td.tsf-score a:link {
+  color: black;
+}
+
+td.tsf-score a:visited {
+  color: black;
+}
+
+td.tsf-score a:hover {
+  color: var(--trustable-turquoise);
+}

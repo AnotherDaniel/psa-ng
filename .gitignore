@@ -6,3 +6,13 @@ config.toml
 
 # act local runner — real secrets file (example is committed)
 .github/.act-secrets
+ 
+# mkdocs-generated files
+site/
+mkdocs/trustable/**
+!mkdocs/trustable/
+!mkdocs/trustable/.nav.yml
+mkdocs/oft/**
+!mkdocs/oft/
+!mkdocs/oft/.nav.yml
+!mkdocs/oft/oft-requirements.md

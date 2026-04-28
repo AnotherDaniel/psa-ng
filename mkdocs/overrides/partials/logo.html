@@ -1,0 +1,12 @@
+<span class="logo-with-badge">
+  {% if config.theme.logo %}
+    <img src="{{ config.docs_dir }}/../{{ config.theme.logo }}" alt="{{ config.site_name }}">
+  {% elif config.theme.icon.logo %}
+    {% set icon = config.theme.icon.logo %}
+    {% include ".icons/" ~ icon ~ ".svg" %}
+  {% endif %}
+
+  {% if config.extra.version %}
+    <span class="version-badge">{{ config.extra.version }}</span>
+  {% endif %}
+</span>
