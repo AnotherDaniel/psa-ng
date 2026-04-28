@@ -510,6 +510,7 @@ jobs:
           report-format: aspec
           report-filename: oft-report.aspec
           tags: ${{ env.OFT_TAGS }}
+          fail-on-error: true
       - name: Upload aspec report
         uses: actions/upload-artifact@v4
         if: ${{ steps.run-oft-aspec.outputs.oft-exit-code != '' }}
@@ -526,6 +527,7 @@ jobs:
           report-format: html
           report-filename: oft-report.html
           tags: ${{ env.OFT_TAGS }}
+          fail-on-error: true
       - name: Upload html report
         uses: actions/upload-artifact@v4
         if: ${{ steps.run-oft-html.outputs.oft-exit-code != '' }}
