@@ -341,6 +341,141 @@ jobs:
           asset_name: "API Access Control"
           asset_tsf_ids: "PSA_NG-API_ACCESS_CONTROL"
 
+      # API protocol conformance evidence
+      - name: tsffer API protocol conformance evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_api_protocol
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~callback-registration"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~remote-command-schema"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~api-error-parsing"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/client.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "OFT tracing for callback registration, remote command
+            schema, and API error parsing requirements plus client
+            implementation"
+          asset_name: "API Protocol Conformance"
+          asset_tsf_ids: "PSA_NG-API_PROTOCOL_CONFORMANCE"
+
+      # API resilience evidence
+      - name: tsffer API resilience evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_api_resilience
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~rate-limit-handling"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~api-pagination"
+              },
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~oauth2-scope-management"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "psa-api/src/client.rs",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "OFT tracing for rate limit handling, pagination, and OAuth2
+            scope management plus client implementation"
+          asset_name: "API Resilience"
+          asset_tsf_ids: "PSA_NG-API_RESILIENCE"
+
+      # Systematic testing evidence
+      - name: tsffer systematic testing evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_systematic_testing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "openfasttrace",
+                "requirement_id": "req~rust-best-practices"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/check.yaml",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/nightly.yaml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "CI workflow files showing systematic test execution on every
+            PR, push to main, and nightly schedule"
+          asset_name: "Systematic Testing"
+          asset_tsf_ids: "PSA_NG-SYSTEMATIC_TESTING"
+
+      # Release completeness evidence
+      - name: tsffer release completeness evidence
+        uses: AnotherDaniel/tsffer@v0.5.5
+        id: tsffer_release_completeness
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: reference
+          reference_properties: |
+            [
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": ".github/workflows/release.yaml",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "Dockerfile",
+                "ref": "${{ github.ref }}"
+              },
+              {
+                "reference_type": "github",
+                "repository": "${{ github.repository }}",
+                "path": "Cargo.toml",
+                "ref": "${{ github.ref }}"
+              }
+            ]
+          asset_description: "Release workflow, build instructions, and project
+            configuration demonstrating complete release iteration artifacts"
+          asset_name: "Release Completeness"
+          asset_tsf_ids: "PSA_NG-RELEASE_COMPLETENESS"
+
       # Web hardening evidence
       - name: tsffer web hardening evidence
         uses: AnotherDaniel/tsffer@v0.5.5

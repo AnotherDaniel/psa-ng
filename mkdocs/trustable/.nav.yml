@@ -1,4 +1,4 @@
 title: Trustable Report
 nav:
     - 'TSF Dashboard': dashboard.md
-    - 'tsftemplate Report': trustable_report_for_tsftemplate.md
+    - 'psa-ng Report': trustable_report_for_psa-ng.md
