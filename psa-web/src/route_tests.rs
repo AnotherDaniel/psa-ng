@@ -151,7 +151,10 @@ mod tests {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
-            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_1", "type": "WakeUp"})))
+            .respond_with(
+                ResponseTemplate::new(202)
+                    .set_body_json(serde_json::json!({"remoteActionId": "ra_1", "type": "WakeUp"})),
+            )
             .mount(&mock_server)
             .await;
 
@@ -228,7 +231,9 @@ mod tests {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
-            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_5", "type": "ThermalPreconditioning"})))
+            .respond_with(ResponseTemplate::new(202).set_body_json(
+                serde_json::json!({"remoteActionId": "ra_5", "type": "ThermalPreconditioning"}),
+            ))
             .mount(&mock_server)
             .await;
 
@@ -250,7 +255,10 @@ mod tests {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
-            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_6", "type": "Doors"})))
+            .respond_with(
+                ResponseTemplate::new(202)
+                    .set_body_json(serde_json::json!({"remoteActionId": "ra_6", "type": "Doors"})),
+            )
             .mount(&mock_server)
             .await;
 
@@ -272,7 +280,10 @@ mod tests {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
-            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_7", "type": "Lights"})))
+            .respond_with(
+                ResponseTemplate::new(202)
+                    .set_body_json(serde_json::json!({"remoteActionId": "ra_7", "type": "Lights"})),
+            )
             .mount(&mock_server)
             .await;
 
@@ -290,7 +301,10 @@ mod tests {
         let mock_server = MockServer::start().await;
         Mock::given(method("POST"))
             .and(path("/user/vehicles/v1/callbacks/test_cb/remotes"))
-            .respond_with(ResponseTemplate::new(202).set_body_json(serde_json::json!({"remoteActionId": "ra_8", "type": "Horn"})))
+            .respond_with(
+                ResponseTemplate::new(202)
+                    .set_body_json(serde_json::json!({"remoteActionId": "ra_8", "type": "Horn"})),
+            )
             .mount(&mock_server)
             .await;
 
