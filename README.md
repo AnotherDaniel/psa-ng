@@ -7,6 +7,8 @@
 
 A Rust reimplementation of [psa_car_controller](https://github.com/flobz/psa_car_controller) — remote control and monitoring for PSA group vehicles (Peugeot, Citroën, Opel/Vauxhall, DS) via the PSA Connected Car v4 API.
 
+Disclaimer: this is primarily done as a test and hands-on trial of current "agentic AI" - a practical application of my `tsfagent` setup, with the goal to evaluate whether stochastic parrots can perform usefully in the context of a more stringent software process, and if maybe such a context can even help keep them honest a bit better.
+
 ## Features
 
 - **Vehicle status** — battery level, charging state, mileage, position, autonomy
