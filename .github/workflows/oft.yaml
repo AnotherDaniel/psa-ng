@@ -53,3 +53,11 @@ jobs:
           report-filename: oft-report.aspec
           tags: ${{ env.OFT_TAGS }}
           fail-on-error: false
+
+      - name: Upload tracing report (aspec)
+        uses: actions/upload-artifact@v4
+        id: upload-tracing-report
+        if: ${{ steps.run-oft-aspec.outputs.oft-exit-code != '' }}
+        with:
+          name: tracing-report-aspec
+          path: oft-report.aspec
