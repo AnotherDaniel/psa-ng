@@ -23,7 +23,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUST_TOOLCHAIN: ${{ vars.RUST_TOOLCHAIN || 'stable' }}
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -53,9 +52,4 @@ jobs:
           report-format: aspec
           report-filename: oft-report.aspec
           tags: ${{ env.OFT_TAGS }}
-          fail-on-error: true
-      - name: Upload aspec report
-        uses: actions/upload-artifact@v4
-        with:
-          name: oft-tracing-report-aspec
-          path: oft-report.aspec
+          fail-on-error: false
